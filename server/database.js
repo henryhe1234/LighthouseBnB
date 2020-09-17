@@ -1,12 +1,12 @@
-const {Pool, Query} = require('pg');
+const { Pool, Query } = require('pg');
 const properties = require('./json/properties.json');
 const users = require('./json/users.json');
 
 const pool = new Pool({
-  user:'vagrant',
-  password:'123',
-  host:'localhost',
-  database:'lightbnb'
+  user: 'vagrant',
+  password: '123',
+  host: 'localhost',
+  database: 'lightbnb'
 });
 
 /// Users
@@ -30,19 +30,19 @@ const pool = new Pool({
 //   }
 //   return Promise.resolve(user);
 // }
-const getUserWithEmail = (email)=>{
+const getUserWithEmail = (email) => {
   return pool.query(`
   SELECT * FROM users
   WHERE email = $1
-  `,[email])
-  .then((res)=>{
-    if(res.rows.length === 0){
-      return null
-    }else{
-      console.log(res.rows[0]);
-      return res.rows[0];
-    }
-  });
+  `, [email])
+    .then((res) => {
+      if (res.rows.length === 0) {
+        return null
+      } else {
+        console.log(res.rows[0]);
+        return res.rows[0];
+      }
+    });
 }
 exports.getUserWithEmail = getUserWithEmail;
 
@@ -54,19 +54,19 @@ exports.getUserWithEmail = getUserWithEmail;
 // const getUserWithId = function(id) {
 //   return Promise.resolve(users[id]);
 // }
-const getUserWithId = (id)=>{
+const getUserWithId = (id) => {
   return pool.query(`
   SELECT * FROM users
   WHERE id = $1
-  `,[id])
-  .then((res)=>{
-    if(res.rows.length === 0){
-      return null
-    }else{
+  `, [id])
+    .then((res) => {
+      if (res.rows.length === 0) {
+        return null
+      } else {
 
-      return res.rows[0];
-    }
-  });
+        return res.rows[0];
+      }
+    });
 }
 exports.getUserWithId = getUserWithId;
 
@@ -82,18 +82,17 @@ exports.getUserWithId = getUserWithId;
 //   users[userId] = user;
 //   return Promise.resolve(user);
 // }
-const addUser = (user)=>{
+const addUser = (user) => {
   return pool.query(`
   INSERT INTO users (
     name, email, password) 
     VALUES (
     $1, $2, $3)
     RETURNING *;
-  `,[user.name,user.email,user.password])
-  .then((res)=>{
-    console.log(res.rows[0]);
-    return res.rows[0];
-  })
+  `, [user.name, user.email, user.password])
+    .then((res) => {
+      return res.rows[0];
+    })
 }
 exports.addUser = addUser;
 
@@ -104,8 +103,22 @@ exports.addUser = addUser;
  * @param {string} guest_id The id of the user.
  * @return {Promise<[{}]>} A promise to the reservations.
  */
-const getAllReservations = function(guest_id, limit = 10) {
-  return getAllProperties(null, 2);
+const getAllReservations = function (guest_id, limit = 10) {
+  return pool.query(`
+  SELECT properties.*, reservations.*, avg(rating) as average_rating
+  FROM reservations
+  JOIN properties ON reservations.property_id = properties.id
+  JOIN property_reviews ON properties.id = property_reviews.property_id 
+  WHERE reservations.guest_id = $1
+  AND reservations.end_date < now()::date
+  GROUP BY properties.id, reservations.id
+  ORDER BY reservations.start_date
+  LIMIT $2;
+  `,[guest_id,limit])
+  .then((res)=>{
+    console.log(res.rows);
+    return res.rows;
+  })
 }
 exports.getAllReservations = getAllReservations;
 
@@ -124,12 +137,12 @@ exports.getAllReservations = getAllReservations;
 //   }
 //   return Promise.resolve(limitedProperties);
 // }
-const getAllProperties = function(options, limit = 10) {
+const getAllProperties = function (options, limit = 10) {
   return pool.query(`
   SELECT * FROM properties
   LIMIT $1
   `, [limit])
-  .then(res => res.rows);
+    .then(res => res.rows);
 }
 exports.getAllProperties = getAllProperties;
 
@@ -139,7 +152,7 @@ exports.getAllProperties = getAllProperties;
  * @param {{}} property An object containing all of the property details.
  * @return {Promise<{}>} A promise to the property.
  */
-const addProperty = function(property) {
+const addProperty = function (property) {
   const propertyId = Object.keys(properties).length + 1;
   property.id = propertyId;
   properties[propertyId] = property;
