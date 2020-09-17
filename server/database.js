@@ -39,8 +39,8 @@ const getUserWithEmail = (email)=>{
     if(res.rows.length === 0){
       return null
     }else{
-
-      return res.rows;
+      console.log(res.rows[0]);
+      return res.rows[0];
     }
   });
 }
@@ -64,7 +64,7 @@ const getUserWithId = (id)=>{
       return null
     }else{
 
-      return res.rows;
+      return res.rows[0];
     }
   });
 }
@@ -89,8 +89,10 @@ const addUser = (user)=>{
     VALUES (
     $1, $2, $3)
     RETURNING *;
-  `,[user.name,user.email,user.password]).then((res)=>{
-    console.log(res.rows);
+  `,[user.name,user.email,user.password])
+  .then((res)=>{
+    console.log(res.rows[0]);
+    return res.rows[0];
   })
 }
 exports.addUser = addUser;

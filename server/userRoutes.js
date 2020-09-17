@@ -27,6 +27,7 @@ module.exports = function(router, database) {
     return database.getUserWithEmail(email)
     .then(user => {
       if (bcrypt.compareSync(password, user.password)) {
+        // if(password === user.password){
         return user;
       }
       return null;
